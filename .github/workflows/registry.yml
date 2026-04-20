@@ -220,18 +220,30 @@ jobs:
 
       - name: Build and push image
         shell: bash
+        env:
+          BUILD_ARGS: ${{ inputs.build_args }}
         run: |
           set -euo pipefail
 
-          docker buildx build \
-            --builder ci-builder \
-            --platform "${BUILD_PLATFORM}" \
-            --file "${DOCKERFILE_PATH}" \
-            --tag "${IMAGE_BASE}:${SHORT_SHA}" \
-            --tag "${IMAGE_BASE}:${OPER_TAG}" \
-            ${{ inputs.build_args }} \
-            --push \
-            "${BUILD_CONTEXT}"
+          # Construct the docker command in an array to safely handle optional/multi-line build_args
+          DOCKER_CMD=(
+            docker buildx build
+            --builder ci-builder
+            --platform "${BUILD_PLATFORM}"
+            --file "${DOCKERFILE_PATH}"
+            --tag "${IMAGE_BASE}:${SHORT_SHA}"
+            --tag "${IMAGE_BASE}:${OPER_TAG}"
+          )
+
+          # Add build_args if they exist (word splitting handles newlines/spaces)
+          if [ -n "$BUILD_ARGS" ]; then
+            DOCKER_CMD+=($BUILD_ARGS)
+          fi
+
+          DOCKER_CMD+=(--push "${BUILD_CONTEXT}")
+
+          # Execute the command array
+          "${DOCKER_CMD[@]}"
 
       - name: Cleanup Buildx builder
         if: always()
