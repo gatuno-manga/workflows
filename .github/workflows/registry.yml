@@ -221,11 +221,10 @@ jobs:
       - name: Build and push image
         shell: bash
         env:
-          BUILD_ARGS: ${{ inputs.build_args }}
+          RAW_BUILD_ARGS: ${{ inputs.build_args }}
         run: |
           set -euo pipefail
 
-          # Construct the docker command in an array to safely handle optional/multi-line build_args
           DOCKER_CMD=(
             docker buildx build
             --builder ci-builder
@@ -235,14 +234,17 @@ jobs:
             --tag "${IMAGE_BASE}:${OPER_TAG}"
           )
 
-          # Add build_args if they exist (word splitting handles newlines/spaces)
-          if [ -n "$BUILD_ARGS" ]; then
-            DOCKER_CMD+=($BUILD_ARGS)
+          if [ -n "$RAW_BUILD_ARGS" ]; then
+            while read -r line; do
+              [ -z "$line" ] && continue
+              for part in $line; do
+                DOCKER_CMD+=("$part")
+              done
+            done <<< "$RAW_BUILD_ARGS"
           fi
 
           DOCKER_CMD+=(--push "${BUILD_CONTEXT}")
 
-          # Execute the command array
           "${DOCKER_CMD[@]}"
 
       - name: Cleanup Buildx builder
