@@ -34,7 +34,7 @@ on:
         type: string
         default: '["self-hosted","linux","x64"]'
       build_args:
-        description: "Lista de argumentos adicionais do docker build (ex: --build-arg KEY=VAL)"
+        description: "Argumentos adicionais do docker buildx build em formato multilinha (uma opcao por linha, ex: --build-arg KEY=VAL). Nao use barra invertida de continuacao (\\)."
         required: false
         type: string
         default: ""
@@ -235,15 +235,42 @@ jobs:
           )
 
           if [ -n "$RAW_BUILD_ARGS" ]; then
-            while read -r line; do
-              [ -z "$line" ] && continue
-              for part in $line; do
-                DOCKER_CMD+=("$part")
-              done
-            done <<< "$RAW_BUILD_ARGS"
+            while IFS= read -r raw_line; do
+              line="$(printf '%s' "${raw_line}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              [ -z "${line}" ] && continue
+
+              if [[ "${line}" == *\\ ]]; then
+                echo "Invalid build_args line: ${line}"
+                echo "Shell continuation with '\\' is not supported. Use one option per line."
+                exit 1
+              fi
+
+              option="${line%%[[:space:]]*}"
+              if [[ "${option}" != -* ]]; then
+                echo "Invalid build_args line: ${line}"
+                echo "Each non-empty line must start with '-' (example: --build-arg KEY=VALUE)."
+                exit 1
+              fi
+
+              if [ "${option}" = "${line}" ]; then
+                DOCKER_CMD+=("${option}")
+                continue
+              fi
+
+              value="$(printf '%s' "${line:${#option}}" | sed 's/^[[:space:]]*//')"
+              if [ -z "${value}" ]; then
+                DOCKER_CMD+=("${option}")
+              else
+                DOCKER_CMD+=("${option}" "${value}")
+              fi
+            done <<< "${RAW_BUILD_ARGS}"
           fi
 
           DOCKER_CMD+=(--push "${BUILD_CONTEXT}")
+
+          echo "Resolved docker buildx command:"
+          printf '  %q' "${DOCKER_CMD[@]}"
+          echo
 
           "${DOCKER_CMD[@]}"
 
