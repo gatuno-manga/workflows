@@ -33,6 +33,11 @@ on:
         required: false
         type: string
         default: '["self-hosted","linux","x64"]'
+      build_args:
+        description: "Lista de argumentos adicionais do docker build (ex: --build-arg KEY=VAL)"
+        required: false
+        type: string
+        default: ""
     secrets:
       REGISTRY_USERNAME:
         required: false
@@ -224,6 +229,7 @@ jobs:
             --file "${DOCKERFILE_PATH}" \
             --tag "${IMAGE_BASE}:${SHORT_SHA}" \
             --tag "${IMAGE_BASE}:${OPER_TAG}" \
+            ${{ inputs.build_args }} \
             --push \
             "${BUILD_CONTEXT}"
 
