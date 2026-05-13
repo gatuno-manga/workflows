@@ -1,0 +1,39 @@
+name: go-ci
+
+on:
+  workflow_call:
+    inputs:
+      go_version:
+        description: "Go version"
+        required: false
+        type: string
+        default: "1.23"
+      install_libvips:
+        description: "Whether to install libvips"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+
+      - name: Install libvips
+        if: ${{ inputs.install_libvips }}
+        run: sudo apt-get update && sudo apt-get install -y libvips-dev
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...

@@ -1,0 +1,43 @@
+name: Bug Report
+description: Relate um erro ou comportamento inesperado
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar o bug! Por favor, forneça o máximo de informações possível.
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Bug
+      placeholder: Uma descrição clara e concisa do que é o bug.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir
+      placeholder: |
+        1. Vá para '...'
+        2. Clique em '....'
+        3. Role para baixo até '....'
+        4. Veja o erro
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento Esperado
+      placeholder: Uma descrição clara e concisa do que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs ou Evidências
+      placeholder: Adicione logs de erro, capturas de tela ou GIFs aqui.
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente
+      placeholder: ex: Windows 11, Chrome 120, API v1.2.3

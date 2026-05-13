@@ -38,6 +38,11 @@ on:
         required: false
         type: string
         default: ""
+      image_tag:
+        description: "Custom image tag (defaults to latest or tag name)"
+        required: false
+        type: string
+        default: ""
     secrets:
       REGISTRY_USERNAME:
         required: false
@@ -127,7 +132,9 @@ jobs:
 
           SHORT_SHA="${GITHUB_SHA::12}"
 
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            OPER_TAG="${{ inputs.image_tag }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             OPER_TAG="${GITHUB_REF_NAME}"
           else
             OPER_TAG="latest"

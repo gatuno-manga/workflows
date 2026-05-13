@@ -1,0 +1,73 @@
+name: node-ci
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        description: "Node.js version"
+        required: false
+        type: string
+        default: "24.11.1"
+      cache_dependency_path:
+        description: "Path to package-lock.json"
+        required: false
+        type: string
+        default: "package-lock.json"
+      setup_chrome:
+        description: "Whether to setup Chrome"
+        required: false
+        type: boolean
+        default: false
+      test_command:
+        description: "Command to run tests"
+        required: false
+        type: string
+        default: "npm run test"
+      build_command:
+        description: "Command to run build"
+        required: false
+        type: string
+        default: "npm run build"
+      run_lint:
+        description: "Whether to run lint"
+        required: false
+        type: boolean
+        default: true
+      lint_command:
+        description: "Command to run lint"
+        required: false
+        type: string
+        default: "npm run lint"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.cache_dependency_path }}
+
+      - name: Setup Chrome
+        if: ${{ inputs.setup_chrome }}
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Lint
+        if: ${{ inputs.run_lint }}
+        run: ${{ inputs.lint_command }}
+
+      - name: Run Tests
+        run: ${{ inputs.test_command }}
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+
+      - name: Build
+        run: ${{ inputs.build_command }}
