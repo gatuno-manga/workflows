@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.go_version }}
+          cache-dependency-path: '**/go.sum'
 
       - name: Install libvips
         if: ${{ inputs.install_libvips }}

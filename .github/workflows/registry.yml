@@ -239,6 +239,8 @@ jobs:
             --file "${DOCKERFILE_PATH}"
             --tag "${IMAGE_BASE}:${SHORT_SHA}"
             --tag "${IMAGE_BASE}:${OPER_TAG}"
+            --cache-from type=gha
+            --cache-to type=gha,mode=max
           )
 
           if [ -n "$RAW_BUILD_ARGS" ]; then
@@ -293,3 +295,11 @@ jobs:
           set -euo pipefail
           docker pull "${IMAGE_BASE}:${SHORT_SHA}"
           echo "Publish validation completed for ${IMAGE_BASE}:${SHORT_SHA}"
+          
+          # Clean up the image from the runner to save disk space
+          docker rmi "${IMAGE_BASE}:${SHORT_SHA}" >/dev/null 2>&1 || true
+
+      - name: Prune dangling images
+        if: always()
+        shell: bash
+        run: docker image prune -f
